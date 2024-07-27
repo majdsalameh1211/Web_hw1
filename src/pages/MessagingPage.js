@@ -1,41 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from '../api/axios';
+import Sidebar from '../pages/Sidebar'; // Adjust the path as necessary
 
-const friendsData = [
-  { name: 'Alice Johnson' },
-  { name: 'Bob Smith' },
-  { name: 'Charlie Brown' }
-];
+const MessagingPage = () => {
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [message, setMessage] = useState('');
 
-const messagesData = [
-  { from: 'Alice Johnson', message: 'Hey, how are you?' },
-  { from: 'You', message: 'I am good, thanks!' },
-  { from: 'Bob Smith', message: 'What are you working on?' }
-];
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await axios.get('/conversations');
+        setConversations(response.data);
+      } catch (error) {
+        console.error('Error fetching conversations', error);
+      }
+    };
 
-function MessagingPage() {
+    fetchConversations();
+  }, []);
+
+  const handleSelectConversation = (conversation) => {
+    setSelectedConversation(conversation);
+  };
+
+  const handleSendMessage = async () => {
+    if (selectedConversation && message) {
+      try {
+        await axios.post(`/conversations/${selectedConversation.id}/messages`, { content: message });
+        setMessage('');
+        // Optionally, fetch messages again to update the conversation
+      } catch (error) {
+        console.error('Error sending message', error);
+      }
+    }
+  };
+
   return (
-    <div className="flex">
-      <div className="w-1/4 bg-gray-200 p-6">
-        <h2 className="text-xl font-semibold mb-4">Friends</h2>
-        <ul>
-          {friendsData.map((friend, index) => (
-            <li key={index} className="py-2 px-4 rounded transition duration-200 hover:bg-gray-700">{friend.name}</li>
-          ))}
-        </ul>
-      </div>
+    <div className="flex min-h-screen">
+      <Sidebar />
       <div className="flex-grow p-6">
-        <h1 className="text-3xl mb-6">Messaging</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-          {messagesData.map((msg, index) => (
-            <div key={index}>
-              <strong>{msg.from}:</strong>
-              <p>{msg.message}</p>
-            </div>
-          ))}
+        <h1>Messaging Page</h1>
+        <div className="conversations">
+          <ul>
+            {conversations.map(convo => (
+              <li key={convo.id} onClick={() => handleSelectConversation(convo)}>
+                {convo.name}
+              </li>
+            ))}
+          </ul>
         </div>
+        {selectedConversation && (
+          <div className="messages">
+            <h2>{selectedConversation.name}</h2>
+            <ul>
+              {selectedConversation.messages.map(msg => (
+                <li key={msg.id}>{msg.content}</li>
+              ))}
+            </ul>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} />
+            <button onClick={handleSendMessage}>Send</button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
 
 export default MessagingPage;

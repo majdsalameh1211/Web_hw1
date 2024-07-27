@@ -1,66 +1,53 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/HomePage';
-import MyNetworkPage from './pages/MyNetworkPage';
-import MessagingPage from './pages/MessagingPage';
 import ProfilePage from './pages/ProfilePage';
-import SkillsPage from './pages/SkillsPage';
+import FriendsPage from './pages/FriendsPage';
+import NotificationsPage from './pages/NotificationsPage';
+import SettingsPage from './pages/SettingsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import Layout from './components/Layout';
-
-// Fake user database
-const fakeUsers = [
-  { email: 'user1@example.com', password: 'password1', firstName: 'John', lastName: 'Doe', phone: '123-456-7890' },
-  { email: 'user2@example.com', password: 'password2', firstName: 'Jane', lastName: 'Smith', phone: '234-567-8901' },
-];
+import Sidebar from './pages/Sidebar';
+import { UserProvider, useUser } from '../src/pages/UserContext';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [auth, setAuth] = useState(false);
 
-  const login = (email, password) => {
-    const user = fakeUsers.find(u => u.email === email && u.password === password);
-    if (user) {
-      setIsLoggedIn(true);
-      setCurrentUser(user);
-    } else {
-      alert('Invalid email or password');
-    }
-  };
-
-  const register = (user) => {
-    fakeUsers.push(user);
-    setIsLoggedIn(true);
-    setCurrentUser(user);
-  };
-
-  const saveSkills = (skills) => {
-    console.log('Saved skills:', skills);
-  };
-
-  const logout = () => {
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-  };
+  useEffect(() => {
+    // Check for authentication state (this example just uses a simple state)
+    // In a real app, you would check for a token or session
+  }, []);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage onLogin={login} />} />
-        <Route path="/register" element={<RegisterPage onRegister={register} />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/" element={isLoggedIn ? <Layout><HomePage /></Layout> : <Navigate to="/login" />} />
-        <Route path="/skills" element={isLoggedIn ? <Layout><SkillsPage onSaveSkills={saveSkills} /></Layout> : <Navigate to="/login" />} />
-        <Route path="/home" element={isLoggedIn ? <Layout><HomePage /></Layout> : <Navigate to="/login" />} />
-        <Route path="/network" element={isLoggedIn ? <Layout><MyNetworkPage /></Layout> : <Navigate to="/login" />} />
-        <Route path="/messaging" element={isLoggedIn ? <Layout><MessagingPage /></Layout> : <Navigate to="/login" />} />
-        <Route path="/profile" element={isLoggedIn ? <Layout><ProfilePage onLogout={logout} /></Layout> : <Navigate to="/login" />} />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-    </Router>
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage setAuth={setAuth} />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route element={<MainLayout />}>
+            <Route path="/home" element={auth ? <HomePage /> : <Navigate to="/login" />} />
+            <Route path="/friends" element={auth ? <FriendsPage /> : <Navigate to="/login" />} />
+            <Route path="/profile/:userId" element={auth ? <ProfilePage /> : <Navigate to="/login" />} />
+            <Route path="/settings" element={auth ? <SettingsPage /> : <Navigate to="/login" />} />
+            <Route path="/notifications" element={auth ? <NotificationsPage /> : <Navigate to="/login" />} />
+            <Route path="/messages" element={auth ? <div>Messages Page</div> : <Navigate to="/login" />} />
+            <Route path="/" element={auth ? <HomePage /> : <Navigate to="/login" />} />
+          </Route>
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
+
+const MainLayout = () => (
+  <div className="flex min-h-screen">
+    <Sidebar />
+    <div className="flex-grow p-6">
+      <Outlet />
+    </div>
+  </div>
+);
 
 export default App;
