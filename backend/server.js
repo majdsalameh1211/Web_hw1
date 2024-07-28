@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const path = require('path');
-const { User } = require('../entities/User'); 
+const { User } = require('../backend/entities/User'); 
 
 
 
